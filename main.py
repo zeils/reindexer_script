@@ -28,9 +28,9 @@ def Get_data():
 
     #ввода логина/пароля
     username_field = driver.find_element(By.ID, 'username')
-    username_field.send_keys(consts.username)
+    username_field.send_keys(consts.username_graylog)
     password_field = driver.find_element(By.ID, 'password') 
-    password_field.send_keys(consts.password)
+    password_field.send_keys(consts.password_graylog)
     password_field.send_keys(Keys.RETURN)
 
     
@@ -81,7 +81,36 @@ def Use_reg():
     os.remove('graylog-search-result-relative-86400.csv')
 
 
-#def Get_courier_cookie():
+def Get_courier_cookie():
+    driver = webdriver.Chrome()
+    driver.delete_all_cookies()
+    courier_url= 'https://courier.esphere.ru/auth/UI/Login?realm=lkk_sfera&goto=https%3A%2F%2Fcourier.esphere.ru%3A443%2F'
+    driver.get(courier_url)
+    time.sleep(consts.waiting_time)
+    
+    #input('ввод логина?')
+    username_field = driver.find_element(By.ID, 'IDToken1')
+    username_field.send_keys(consts.username_courier)
+    #input('ввод пароля?')
+    password_field = driver.find_element(By.ID, 'IDToken2') 
+    password_field.send_keys(consts.password_courier)
+    #input('ввод?')
+    time.sleep(consts.waiting_time)
+    submit_button = driver.find_element(By.NAME, 'Login.Submit').click() 
+
+    cookie = driver.get_cookies()
+ 
+    #eSphereAuth
+    print('ваш eSphereAuth')
+    print(cookie[10]['value'])
+    #clientID
+    print('ваш clinetID')
+    print(cookie[14]['value'])
+
+
+    #input('выход?')
+    driver.quit()
+    
 
 
 print("Скачивание файла")
@@ -89,6 +118,11 @@ Get_data()
 print("Использование регулярок")
 Use_reg()
 print("Вывод done файла")
+
+print("Получение куки курьера для скрипта реиндексации")
+Get_courier_cookie()
+
+
 
 
 
