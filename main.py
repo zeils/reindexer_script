@@ -10,35 +10,40 @@ import consts
 
 
 def Get_data():
+    #Выбор директории для скачивания файла
     chrome_options = webdriver.ChromeOptions()
-
     prefs = {'download.default_directory' : os.getcwd()}
-    
     chrome_options.add_experimental_option('prefs', prefs)
-
+    #Запуск драйвера
     driver = webdriver.Chrome(options=chrome_options)
-    chrome_options = webdriver.ChromeOptions()
+
     
+    #На всякий чистим куки
     driver.delete_all_cookies()
+
     graylog_filter_url= 'http://grlog-prod.esphere.local/search?rangetype=relative&fields=message%2Csource&width=1366&highlightMessage=&relative=86400&q=%22document%20missing%22%20AND%20facility%3Acourier.search.indexer%20'
     driver.get(graylog_filter_url)
-
+    #ждем пока прогрузится страница авторизации грейлога
     time.sleep(consts.waiting_time)
-    #input('авторизация?')
 
+    #ввода логина/пароля
     username_field = driver.find_element(By.ID, 'username')
     username_field.send_keys(consts.username)
-    #input('ввод пароля?')
     password_field = driver.find_element(By.ID, 'password') 
     password_field.send_keys(consts.password)
     password_field.send_keys(Keys.RETURN)
 
-    #input('экспорт?')
+    
+    #ждем пока загрузится выборка грейлога
     time.sleep(consts.waiting_time)
+
+    #Нажатие кнопочек для скачивания
+    #input('экспорт?')
     moreactions_button = driver.find_element(By.ID, 'search-more-actions-dropdown').click()
     export_div = driver.find_element(By.XPATH, '//*[@id="sidebar"]/div/div[2]/div[1]/div/div[3]/div/ul/li[1]').click()
     download_button = driver.find_element(By.XPATH, '/html/body/div[2]/div[2]/div/div/div[2]/p[2]/a').click()
 
+    #Ждем пока скачается файл
     time.sleep(consts.waiting_time)
     driver.quit()
 
@@ -74,6 +79,11 @@ def Use_reg():
         txt_file.writelines(result_lines)
 
     os.remove('graylog-search-result-relative-86400.csv')
+
+
+#def Get_courier_cookie():
+
+
 print("Скачивание файла")
 Get_data()
 print("Использование регулярок")
