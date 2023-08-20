@@ -5,15 +5,18 @@ import time
 import os
 import re
 import consts
+import requests
 
 
 
 
 def Get_data():
+    print("Скачивание файла")
     #Выбор директории для скачивания файла
     chrome_options = webdriver.ChromeOptions()
     prefs = {'download.default_directory' : os.getcwd()}
     chrome_options.add_experimental_option('prefs', prefs)
+    chrome_options.add_argument('headless')
     #Запуск драйвера
     driver = webdriver.Chrome(options=chrome_options)
 
@@ -48,6 +51,7 @@ def Get_data():
     driver.quit()
 
 def Use_reg():
+    print("Использование регулярок")
     # Путь к файлу CSV
     csv_file_path = 'graylog-search-result-relative-86400.csv'  # Укажите свой путь
 
@@ -79,48 +83,65 @@ def Use_reg():
         txt_file.writelines(result_lines)
 
     os.remove('graylog-search-result-relative-86400.csv')
-
+    print("Вывод done файла")
 
 def Get_courier_cookie():
-    driver = webdriver.Chrome()
+    print('Получение кук для реиндексации')
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('headless')
+    driver = webdriver.Chrome(options=chrome_options)
     driver.delete_all_cookies()
     courier_url= 'https://courier.esphere.ru/auth/UI/Login?realm=lkk_sfera&goto=https%3A%2F%2Fcourier.esphere.ru%3A443%2F'
     driver.get(courier_url)
     time.sleep(consts.waiting_time)
     
-    #input('ввод логина?')
+
     username_field = driver.find_element(By.ID, 'IDToken1')
     username_field.send_keys(consts.username_courier)
-    #input('ввод пароля?')
+
     password_field = driver.find_element(By.ID, 'IDToken2') 
     password_field.send_keys(consts.password_courier)
-    #input('ввод?')
-    time.sleep(consts.waiting_time)
-    submit_button = driver.find_element(By.NAME, 'Login.Submit').click() 
+
+    submit_button = driver.find_element(By.NAME, 'Login.Submit').click()
+    time.sleep(consts.waiting_time) 
 
     cookie = driver.get_cookies()
- 
-    #eSphereAuth
-    print('ваш eSphereAuth')
-    print(cookie[10]['value'])
-    #clientID
-    print('ваш clinetID')
-    print(cookie[14]['value'])
-
-
-    #input('выход?')
-    driver.quit()
+    #print(cookie)
     
+    eSphereAuth = ''
+    clinetID = ''
+    
+    for element in cookie:
+        if element['name'] == 'eSphereAuth': eSphereAuth = element['value']
+        if element['name'] == 'clientId': clinetID = element['value']
 
 
-print("Скачивание файла")
+    driver.quit()
+    return eSphereAuth, clinetID 
+    
+def Reindexer():
+    eSphereAuth, clinetID = Get_courier_cookie()
+
+    done_file = open("done.txt", "r")
+    while True:
+
+        doc = done_file.readline().strip()
+
+        if not doc:
+            break
+        
+        url = f'https://courier.esphere.ru/webapi/monitoring/{doc}/reindex'
+        response = requests.post(url, headers={"Content-Length": "0"}, cookies = {"eSphereAuth": eSphereAuth, "clientid": clinetID})
+        print (f'{doc} - {response}')
+
+
+
 Get_data()
-print("Использование регулярок")
 Use_reg()
-print("Вывод done файла")
+Reindexer()
 
-print("Получение куки курьера для скрипта реиндексации")
-Get_courier_cookie()
+
+
 
 
 
